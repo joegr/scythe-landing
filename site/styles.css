@@ -102,9 +102,18 @@ footer { margin-top: 5rem; border-top: 3px solid var(--ink); padding-top: 1rem; 
   .signup .action { width: 100%; }
 }
 
+/* ---------- the wordmark ---------- */
+.wordmark {
+  font: 600 clamp(36px, 8vw, 72px)/1 var(--font);
+  text-transform: lowercase; letter-spacing: .06em;
+  color: var(--paper); position: relative; z-index: 1;
+  /* Headroom above the letters: the undertaker stands on them, hat, scythe blade and all. */
+  padding: 10rem 0 2rem;
+}
+
 /* ---------- the undertaker (index only; drawn by undertaker.js) ---------- */
 .banner { position: relative; overflow: hidden; padding-bottom: 14rem; }
-.undertaker { position: absolute; left: 0; bottom: 0; display: block; pointer-events: none; }
+.undertaker { position: absolute; left: 0; top: 0; width: 100%; display: block; pointer-events: none; z-index: 2; }
 .undertaker .stroke { fill: none; stroke: var(--paper); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .undertaker .stroke.thin { stroke-width: 1.4; }
 .undertaker .solid { fill: var(--paper); stroke: none; }
