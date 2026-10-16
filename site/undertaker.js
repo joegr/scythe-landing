@@ -1,9 +1,12 @@
 // The undertaker: a Quixote-thin stick figure in a top hat, scythe over his shoulder. The big
-// "scythe" letters are his ground: he walks along their tops, and every so often picks a letter,
-// walks to it, slows to a stop, bends his knees and sits down on it, legs dangling over the front,
-// scythe across his lap. After a while he stands back up and strolls on. Nothing ever snaps: the
-// stride shrinks to nothing as he stops, and sitting and standing are one continuous motion.
-// Reach for him and he springs up and bolts. With reduced motion he just sits on the 'h'.
+// "scythe" letters are his ground: he walks along the tops of the glyphs themselves, stepping up
+// onto the tall 't' and 'h' and down onto the short letters like stairs. Every so often he picks a
+// letter, walks to it, slows to a stop, bends his knees and sits right on its top edge, his legs
+// swinging round toward you and hanging down over the face of the letter, the scythe held upright
+// beside him like a staff. After a while he stands back up and strolls on. Nothing ever snaps:
+// steps are eased, the stride shrinks to nothing as he stops, and sitting and standing are one
+// continuous motion. Reach for him and he springs up and bolts. With reduced motion he just sits
+// on the 'h'.
 ;(() => {
   const svgEl = document.getElementById('undertaker')
   const banner = svgEl && svgEl.closest('.banner')
@@ -27,25 +30,50 @@
   const snath = fig.append('path').attr('class', 'stroke')
   const blade = fig.append('path').attr('class', 'solid')
 
-  // ---------------------------------------------------------------- the letters: where he can walk and sit
-  let letters = [] // {cx, top, w} in banner coordinates
+  // ---------------------------------------------------------------- the letters: where he walks and sits
+  // A range's box is the whole line box, well above a lowercase letter. The ink's real top edge is
+  // the baseline minus the glyph's own ascent, measured on a canvas in the wordmark's font.
+  let letters = [] // {cx, left, right, top} in banner coordinates; top is the top of the ink
+  let span = [0, 0], plainTop = 0 // the word's extent, and the x-height line used off the word
+  const ctx = document.createElement('canvas').getContext('2d')
+
   function measureLetters() {
-    const bR = banner.getBoundingClientRect()
     const tn = wordmark.firstChild
     if (!tn || tn.nodeType !== Node.TEXT_NODE) return
+    const bR = banner.getBoundingClientRect()
+    const probe = document.createElement('span') // sits on the baseline
+    probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
+    wordmark.appendChild(probe)
+    const baseline = probe.getBoundingClientRect().top - bR.top
+    probe.remove()
+    const cs = getComputedStyle(wordmark)
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+    const text = tn.textContent
     const range = document.createRange()
     letters = []
     for (let i = 0; i < tn.length; i++) {
       range.setStart(tn, i); range.setEnd(tn, i + 1)
       const r = range.getBoundingClientRect()
       if (r.width < 2) continue
-      letters.push({ cx: r.left - bR.left + r.width / 2, top: r.top - bR.top, w: r.width })
+      const ascent = ctx.measureText(text[i]).actualBoundingBoxAscent
+      letters.push({ cx: r.left - bR.left + r.width / 2, left: r.left - bR.left, right: r.right - bR.left, top: baseline - ascent })
     }
+    if (!letters.length) return
+    span = [letters[0].left, letters[letters.length - 1].right]
+    plainTop = Math.max(...letters.map((l) => l.top))
   }
-  const groundY = () => (letters.length ? Math.min(...letters.map((l) => l.top)) : HEIGHT * 0.4)
+
+  // The surface under x: the letter he is over (nearest in the gaps), or the x-height line off the word.
+  function surface(px) {
+    if (!letters.length) return HEIGHT * 0.4
+    if (px < span[0] || px > span[1]) return plainTop
+    let best = letters[0]
+    for (const l of letters) if (Math.abs(l.cx - px) < Math.abs(best.cx - px)) best = l
+    return best.top
+  }
 
   // ---------------------------------------------------------------- state
-  let x, dir = 1, phase = 0, speed = 0, fleeUntil = 0
+  let x, gy, dir = 1, phase = 0, speed = 0, fleeUntil = 0
   let runBlend = 0   // 0 walking … 1 running
   let sitBlend = 0   // 0 standing … 1 seated
   let target = null  // the letter he is walking to, or sitting on
@@ -59,9 +87,12 @@
     width = banner.clientWidth; HEIGHT = banner.clientHeight || 800
     svg.attr('width', width).attr('height', HEIGHT)
     measureLetters()
-    if (x === undefined) x = letters.length ? letters[0].cx - 80 : width * 0.1
+    if (target) target = letters.reduce((a, l) => (Math.abs(l.cx - x) < Math.abs(a.cx - x) ? l : a), letters[0])
+    if (x === undefined) x = letters.length ? letters[0].cx : width * 0.1
+    gy = surface(x)
   }
   new ResizeObserver(layout).observe(banner)
+  if (document.fonts) document.fonts.ready.then(layout) // the web font changes every glyph's size
   layout()
 
   // ---------------------------------------------------------------- geometry helpers
@@ -119,31 +150,37 @@
   }
 
   // ---------------------------------------------------------------- sitting down (s: 0 standing … 1 seated)
-  // Three keyframes: standing straight, knees bent in a crouch, seated on the letter with the
-  // legs hanging over its front edge and the scythe laid across the lap.
+  // Leg keyframes, hip at the origin: standing straight; crouched in profile with the knees bent;
+  // seated on the letter's top edge with the thighs swung toward you (foreshortened to a stub) and
+  // the shins hanging straight down over the face of the letter, a little apart.
+  const LEG_KEYS = {
+    stand:  [{ knee: [1, THIGH], foot: [1, LEGS], toe: [6, LEGS] }, { knee: [-1, THIGH], foot: [-1, LEGS], toe: [4, LEGS] }],
+    crouch: [{ knee: [22, 15], foot: [6, 26], toe: [11, 26] }, { knee: [19, 17], foot: [2, 26], toe: [7, 26] }],
+    seated: [{ knee: [7, 6], foot: [8, 6 + SHIN], toe: [12, 5 + SHIN] }, { knee: [-3, 7], foot: [-3, 7 + SHIN], toe: [1, 6 + SHIN] }],
+  }
   const KEY = {
-    stand:  { thigh: 0.05, bend: 0.0,  hip: LEGS,         lean: 0.06, handA: 0.75, handB: 1.9,  tilt: -0.38 },
-    crouch: { thigh: 1.0,  bend: 1.9,  hip: LEGS * 0.52,  lean: 0.38, handA: 0.95, handB: 1.7,  tilt: -0.2 },
-    seated: { thigh: 1.32, bend: 1.36, hip: 7,            lean: 0.02, handA: 0.55, handB: 1.15, tilt: 1.25 },
+    stand:  { hip: LEGS, lean: 0.06, handA: 0.75, handB: 1.9, tilt: -0.38, tail: 0 },
+    crouch: { hip: 26,   lean: 0.38, handA: 0.95, handB: 1.7, tilt: -0.2,  tail: 0.5 },
+    seated: { hip: -2,   lean: 0.02, handA: 0.6,  handB: 2.2,  tilt: 0.12, tail: 1 },
   }
   function sitPose(s) {
     const e = smooth(s)
-    const [a, b, t] = e < 0.5 ? [KEY.stand, KEY.crouch, e * 2] : [KEY.crouch, KEY.seated, (e - 0.5) * 2]
+    const [from, to, t] = e < 0.5 ? ['stand', 'crouch', e * 2] : ['crouch', 'seated', (e - 0.5) * 2]
     const k = {}
-    for (const key of Object.keys(a)) k[key] = mx(a[key], b[key], t)
+    for (const key of Object.keys(KEY[from])) k[key] = mx(KEY[from][key], KEY[to][key], t)
     const hip = [0, 0]
-    // Two legs, the far one a touch behind, so they read as a pair rather than one line.
-    const legs = [0, 0.12].map((off) => {
-      const knee = at(hip, k.thigh + off, THIGH), foot = at(knee, k.thigh + off - k.bend, SHIN)
-      return { knee, foot, toe: [foot[0] + 5, foot[1]] }
+    const legs = [0, 1].map((i) => {
+      const a = LEG_KEYS[from][i], b = LEG_KEYS[to][i]
+      return { knee: lerpP(a.knee, b.knee, t), foot: lerpP(a.foot, b.foot, t), toe: lerpP(a.toe, b.toe, t) }
     })
     const shoulder = up(hip, k.lean, TORSO), neck = up(shoulder, k.lean, NECK), hd = up(neck, k.lean, HEAD)
-    // Back hand comes to rest on the far knee; the front hand keeps the scythe.
-    const bElbow = at(shoulder, mx(-0.1, 0.9, e), UPPER), bHand = lerpP(at(bElbow, 0.3, FORE), legs[1].knee, e)
+    // Back hand comes to rest on the near knee; the front hand keeps the scythe.
+    const bElbow = at(shoulder, mx(-0.1, 0.6, e), UPPER), bHand = lerpP(at(bElbow, 0.3, FORE), legs[0].knee, e)
     const fElbow = at(shoulder, k.handA, UPPER), hand = at(fElbow, k.handB, FORE)
-    // The snath pivots in the hand from upright over the shoulder to lying across the knees.
+    // The snath swings from over the shoulder to upright, held like a staff while he sits.
     const top = up(hand, k.tilt, 78), butt = up(hand, k.tilt + Math.PI, 20)
-    const tailA = at(hip, mx(-0.35, -1.3, e), 30), tailB = at(hip, mx(-0.2, -1.05, e), 26)
+    // Coat tails fall behind him, over the back of the letter.
+    const tailA = at(hip, mx(-0.35, -0.5, k.tail), 30), tailB = at(hip, mx(-0.2, -0.3, k.tail), 26)
     return {
       body: ln(legs[0].toe, legs[0].foot, legs[0].knee, hip, legs[1].knee, legs[1].foot, legs[1].toe) +
         ln(hip, shoulder, neck) + ln(bHand, bElbow, shoulder, fElbow, hand),
@@ -155,7 +192,7 @@
   function draw() {
     const moving = Math.min(1, speed / WALK.speed)
     const p = sitBlend > 0 ? sitPose(sitBlend) : walkPose(runBlend, moving)
-    const baseY = groundY() - p.hipHeight * SCALE
+    const baseY = gy - p.hipHeight * SCALE
     fig.attr('transform', `translate(${x.toFixed(1)},${baseY.toFixed(1)}) scale(${dir * SCALE},${SCALE})`)
     body.attr('d', p.body); coat.attr('d', p.coat)
     headEl.attr('cx', p.hd[0]).attr('cy', p.hd[1])
@@ -165,7 +202,7 @@
   // ---------------------------------------------------------------- startled
   function threat(px, py) {
     const r = svgEl.getBoundingClientRect()
-    const fy = r.top + groundY() - LEGS * SCALE * 0.5
+    const fy = r.top + gy - LEGS * SCALE * 0.5
     if (Math.abs(py - fy) > 120 || Math.abs(px - (r.left + x)) > 95) return
     if (performance.now() > fleeUntil) dir = px < r.left + x ? 1 : -1 // away from the hand
     fleeUntil = performance.now() + 2200
@@ -176,9 +213,13 @@
 
   // ---------------------------------------------------------------- reduced motion: seated on the 'h', still
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const l = letters[4] || letters[letters.length - 1]
-    if (l) { x = l.cx; sitBlend = 1 }
-    draw()
+    const still = () => {
+      const l = letters[4] || letters[letters.length - 1]
+      if (l) { x = l.cx; gy = l.top; sitBlend = 1 }
+      draw()
+    }
+    if (document.fonts) document.fonts.ready.then(still)
+    still()
     return
   }
 
@@ -206,7 +247,7 @@
         break
       }
       case S.SITTING:
-        sitBlend = Math.min(1, sitBlend + dt / 1.3)
+        sitBlend = Math.min(1, sitBlend + dt / 1.4)
         if (sitBlend >= 1) { state = S.SEATED; timer = 4 + Math.random() * 5 }
         break
       case S.SEATED:
@@ -214,7 +255,7 @@
         if (timer <= 0) state = S.RISING
         break
       case S.RISING:
-        sitBlend = Math.max(0, sitBlend - dt / 1.0)
+        sitBlend = Math.max(0, sitBlend - dt / 1.1)
         if (sitBlend <= 0) { state = S.STROLL; timer = 3 + Math.random() * 4 }
         break
       case S.RUN:
@@ -230,13 +271,16 @@
     x += dir * speed * dt
     if (state === S.APPROACH && (target.cx - before) * (target.cx - x) < 0) x = target.cx // never overshoot
 
-    if (state === S.STROLL) { // turn around at the edges
-      if (x > width - 60 && dir > 0) dir = -1
-      if (x < 60 && dir < 0) dir = 1
+    if (state === S.STROLL) { // pace the word, turning at its ends
+      if (x > span[1] - 8 && dir > 0) dir = -1
+      if (x < span[0] + 8 && dir < 0) dir = 1
     } else if (state === S.RUN) { // leave one side, come back in from the other
       if (x > width + 90) x = -90
       if (x < -90) x = width + 90
     }
+
+    // Step up and down between letters of different heights, eased so he never jumps.
+    gy += (surface(x) - gy) * Math.min(1, dt * 9)
     draw()
   })
 })()
