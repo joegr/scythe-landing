@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>scythe</title>
+  <meta name="description" content="A debate card cutter that is also a spaCy span-labeling tool. Cards live as GitHub issues.">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Where the signup form posts: the relay in relay/, which writes to a private repo. -->
+  <meta name="signup-endpoint" content="https://scythe-signup.fly.dev/">
+</head>
+<body>
+  <div class="page">
+    <nav class="top">
+      <a href="./" class="brand">scythe</a>
+      <a href="#preview">preview</a>
+      <a href="#signup">early access</a>
+    </nav>
+
+    <main class="stack">
+      <section class="gap">
+        <h1>Cut cards. Keep the spans.</h1>
+        <p class="lede">Scythe is a debate card cutter that is also a spaCy labeling tool. Underline, highlight and emphasis are stored as token-aligned spans, so every card you cut is training data too. Cards live as issues in a GitHub repository you own.</p>
+      </section>
+
+      <section id="preview" class="preview gap">
+        <div class="row">
+          <strong>One card, two views</strong>
+          <span style="margin-left:auto"></span>
+          <button class="link on" data-view="card">card</button>
+          <button class="link" data-view="spans">spans</button>
+        </div>
+        <article class="card">
+          <p class="card-tag">Formatting a card should not destroy the record of what was cut.</p>
+          <p class="card-cite"><strong>Lastname ’24</strong>, sample cite, Journal of Examples</p>
+          <p class="card-body">Every card is cut <span class="t-u">verbatim from the source</span>, then <span class="t-u"><span class="t-hl">tokenized exactly once</span></span>. The <span class="t-u"><span class="t-hl">underlines, highlights and</span> <span class="t-hl t-em">emphasis</span></span> you add are <span class="t-u">stored against those tokens</span>, not as loose styling, so <span class="t-u"><span class="t-hl">nothing drifts</span> when the card is</span> printed, exported or re-read.</p>
+<pre class="spans">"spans": {
+  "underline": [[4, 8], [13, 17], [19, 25], [29, 34], [38, 45]],
+  "highlight": [[14, 17], [20, 24], [24, 25], [38, 40]],
+  "emphasis":  [[24, 25]]
+}
+→ DocBin · Doc.to_json() · Prodigy JSONL</pre>
+          <div class="card-meta"><span>topic: sample</span><span>issue #42</span><span>approved</span></div>
+        </article>
+      </section>
+
+      <section class="gap">
+        <h2>What it does</h2>
+        <ul class="list">
+          <li><strong>Reader mode.</strong> Paste or open a source, select a passage, cut it. The text stays verbatim and the cite is filled in.</li>
+          <li><strong>Lossless spans.</strong> Formatting round-trips through spaCy <kbd>DocBin</kbd>, <kbd>Doc.to_json()</kbd> and Prodigy JSONL.</li>
+          <li><strong>Your repo, your cards.</strong> Each card is a GitHub issue; its source is the parent issue. Backlinks, labels and history come free.</li>
+          <li><strong>A searchable graph.</strong> Sources, cards, authors and entities link up, filed under 542 past NSDA topics or your own.</li>
+          <li><strong>Prints clean.</strong> One canonical Markdown drives the view, the export and the printed page.</li>
+        </ul>
+      </section>
+
+      <section id="signup" class="signup gap">
+        <h2>Get early access</h2>
+        <p>Leave an email and we’ll write when Scythe is ready to try. Nothing else.</p>
+        <form id="signup-form" novalidate>
+          <div class="row">
+            <label for="email" class="hp">Email</label>
+            <input id="email" name="email" type="email" class="field" placeholder="you@school.edu" autocomplete="email" required>
+            <button type="submit" class="action">Notify me</button>
+          </div>
+          <!-- Honeypot: people never see or fill this; bots often do. -->
+          <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div>
+        </form>
+        <p id="signup-status" role="status" hidden></p>
+      </section>
+    </main>
+
+    <footer style="margin-top:5rem">
+      <p class="note">Scythe is built for debaters, coaches and anyone labeling text with spaCy.</p>
+    </footer>
+  </div>
+
+  <script>
+    // Preview toggle: same tokens shown as a card or as stored span groups.
+    const preview = document.getElementById('preview')
+    preview.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => {
+      preview.classList.toggle('as-spans', b.dataset.view === 'spans')
+      preview.querySelectorAll('[data-view]').forEach((o) => o.classList.toggle('on', o === b))
+    }))
+
+    // Signup: POST the email to the relay, which saves it to a private GitHub repo.
+    const form = document.getElementById('signup-form')
+    const status = document.getElementById('signup-status')
+    const endpoint = document.querySelector('meta[name="signup-endpoint"]').content.trim()
+    const say = (text, isError) => { status.hidden = false; status.textContent = text; status.className = isError ? 'error' : 'note' }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const email = form.email.value.trim()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return say('That doesn’t look like an email address.', true)
+      if (!endpoint) return say('Signups aren’t connected yet. Set the signup-endpoint meta tag.', true)
+      const button = form.querySelector('button')
+      button.disabled = true
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, website: form.website.value, source: location.search.slice(1) || null }),
+        })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
+        form.hidden = true
+        say('Thanks. You’re on the list.')
+      } catch (err) {
+        button.disabled = false
+        say(`Couldn’t sign you up: ${err.message}`, true)
+      }
+    })
+  </script>
+</body>
+</html>

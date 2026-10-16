@@ -1,0 +1,6 @@
+{
+  "name": "scythe-signup-relay",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.js" }
+}
