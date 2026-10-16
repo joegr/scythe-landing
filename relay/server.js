@@ -21,6 +21,16 @@ const limited = (ip) => {
 }
 setInterval(() => hits.clear(), 10 * 60_000).unref()
 
+// Where a signup came from: only the utm_* tags of the page's query string. Anything else riding
+// on the link (click IDs, an email someone pasted into it) is dropped, so the email is all we keep.
+export function campaign(query) {
+  const kept = new URLSearchParams()
+  for (const [k, v] of new URLSearchParams(String(query || ''))) {
+    if (/^utm_[a-z]{1,20}$/.test(k)) kept.append(k, v.slice(0, 60))
+  }
+  return kept.toString().slice(0, 200) || null
+}
+
 async function store(email, source) {
   const id = createHash('sha256').update(email).digest('hex').slice(0, 32)
   const record = { email, source, created_at: new Date().toISOString() }
@@ -56,7 +66,7 @@ createServer(async (req, res) => {
 
   const email = String(body.email || '').trim().toLowerCase()
   if (email.length > 254 || !EMAIL.test(email)) return reply(400, { error: 'invalid email' })
-  const source = body.source ? String(body.source).slice(0, 200) : null
+  const source = campaign(body.source)
 
   try {
     await store(email, source)
