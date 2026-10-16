@@ -4,60 +4,89 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>scythe</title>
-  <meta name="description" content="A debate card cutter that is also a spaCy span-labeling tool. Cards live as GitHub issues.">
+  <meta name="description" content="Scythe is a card cutter for debaters. Cut evidence word for word, mark it up, file it, and never lose your partner's work. Your team's evidence lives on GitHub, where your team owns it.">
   <link rel="stylesheet" href="styles.css">
   <!-- Where the signup form posts: the relay in relay/, which writes to a private repo. -->
   <meta name="signup-endpoint" content="https://scythe-signup.fly.dev/">
 </head>
 <body>
+  <header class="banner">
+    <div class="page">
+      <nav class="top">
+        <a href="./" class="brand">scythe</a>
+        <a href="#why">why</a>
+        <a href="#how">how it works</a>
+        <a href="https://joegr.github.io/scythe/">open the app</a>
+        <a href="#signup">early access</a>
+      </nav>
+      <section class="gap hero">
+        <h1>Evidence is verbatim, or it isn’t evidence.</h1>
+        <p>Scythe is a card cutter for high school and college debaters. Cut the author’s exact words, mark them up on whole words, file them into your blocks, and walk into round knowing every card says what the article says.</p>
+        <p class="row">
+          <a class="action" href="https://joegr.github.io/scythe/">Open Scythe</a>
+          <a href="#signup">Get early access</a>
+        </p>
+        <p><em>Prodigy for les terminales: the tool serious labelers use, rebuilt for people who have a tournament on Saturday.</em></p>
+      </section>
+    </div>
+  </header>
+
   <div class="page">
-    <nav class="top">
-      <a href="./" class="brand">scythe</a>
-      <a href="#preview">preview</a>
-      <a href="#signup">early access</a>
-    </nav>
-
     <main class="stack">
-      <section class="gap">
-        <h1>Cut cards. Keep the spans.</h1>
-        <p class="lede">Scythe is a debate card cutter that is also a spaCy labeling tool. Underline, highlight and emphasis are stored as token-aligned spans, so every card you cut is training data too. Cards live as issues in a GitHub repository you own.</p>
+      <section id="why" class="gap">
+        <h2>What we believe</h2>
+        <ol class="beliefs">
+          <li><strong>Never rewrite the author.</strong> Scythe cuts the exact characters of the source. You can’t paraphrase inside a card, and a pasted quote is matched back to the article, curly quotes, dashes and all, so you can’t “clean it up” either.</li>
+          <li><strong>Your highlighting is your argument.</strong> What you underline and highlight is what you read in the speech, so Scythe treats it as real data. Every mark snaps to whole words, nothing drifts, and the read-aloud version is exactly what you marked.</li>
+          <li><strong>Nobody loses a card because their partner saved first.</strong> If two of you edit the same card in the same second, Scythe stops the second save and shows both changes. Add yours to theirs, keep theirs, or keep yours. The other version stays in the card’s history either way.</li>
+          <li><strong>Your team owns its evidence.</strong> Cards live in a GitHub repository your team controls, not in a company’s database. If Scythe disappeared tomorrow, every card, cite and highlight would still be there as plain files.</li>
+          <li><strong>Every card has a resolution.</strong> All 542 past NSDA topics (Policy, LD, PF and Big Questions) are built in, and you can write your own. A card that isn’t filed under a topic gets lost by February.</li>
+        </ol>
       </section>
 
-      <section id="preview" class="preview gap">
-        <div class="row">
-          <strong>One card, two views</strong>
-          <span style="margin-left:auto"></span>
-          <button class="link on" data-view="card">card</button>
-          <button class="link" data-view="spans">spans</button>
-        </div>
-        <article class="card">
-          <p class="card-tag">Formatting a card should not destroy the record of what was cut.</p>
-          <p class="card-cite"><strong>Lastname ’24</strong>, sample cite, Journal of Examples</p>
-          <p class="card-body">Every card is cut <span class="t-u">verbatim from the source</span>, then <span class="t-u"><span class="t-hl">tokenized exactly once</span></span>. The <span class="t-u"><span class="t-hl">underlines, highlights and</span> <span class="t-hl t-em">emphasis</span></span> you add are <span class="t-u">stored against those tokens</span>, not as loose styling, so <span class="t-u"><span class="t-hl">nothing drifts</span> when the card is</span> printed, exported or re-read.</p>
-<pre class="spans">"spans": {
-  "underline": [[4, 8], [13, 17], [19, 25], [29, 34], [38, 45]],
-  "highlight": [[14, 17], [20, 24], [24, 25], [38, 40]],
-  "emphasis":  [[24, 25]]
-}
-→ DocBin · Doc.to_json() · Prodigy JSONL</pre>
-          <div class="card-meta"><span>topic: sample</span><span>issue #42</span><span>approved</span></div>
-        </article>
+      <section class="inverse gap" aria-label="A sample card in Scythe">
+        <p class="card-tag">Sample card: formatting never touches the author’s words</p>
+        <p class="card-cite"><strong>Lastname 24</strong>, Author Name, the author’s quals, “Article Title”, Publication, 3-14-2024, link</p>
+        <p class="card-body">Every card is cut <span class="t-u">verbatim from the source</span>. The <span class="t-u"><span class="t-hl">underlines, highlights and</span> <span class="t-hl t-em">emphasis</span></span> you add <span class="t-u">sit on top of the author’s words</span> and <span class="t-u"><span class="t-hl">never change them</span>, so what you read is what they wrote</span>.</p>
+        <p class="key"><span class="t-u">underline</span> · <span class="t-hl">highlight</span> · <span class="t-hl t-em">emphasis</span>. One key each: 1, 2, 3.</p>
       </section>
 
-      <section class="gap">
-        <h2>What it does</h2>
+      <section id="how" class="gap">
+        <h2>How it works</h2>
         <ul class="list">
-          <li><strong>Reader mode.</strong> Paste or open a source, select a passage, cut it. The text stays verbatim and the cite is filled in.</li>
-          <li><strong>Lossless spans.</strong> Formatting round-trips through spaCy <kbd>DocBin</kbd>, <kbd>Doc.to_json()</kbd> and Prodigy JSONL.</li>
-          <li><strong>Your repo, your cards.</strong> Each card is a GitHub issue; its source is the parent issue. Backlinks, labels and history come free.</li>
-          <li><strong>A searchable graph.</strong> Sources, cards, authors and entities link up, filed under 542 past NSDA topics or your own.</li>
-          <li><strong>Prints clean.</strong> One canonical Markdown drives the view, the export and the printed page.</li>
+          <li><strong>Open the article.</strong> Paste a link and Scythe reads the page for you, or paste the text from a paywalled article or a PDF. The source gets a cite drafted from its author, date and publication.</li>
+          <li><strong>Cut.</strong> Select the passage, or paste one you copied earlier and Scythe finds it. Write the tag, check the cite, cut. The card is the source’s words, nothing else.</li>
+          <li><strong>Mark it up.</strong> Select and press 1, 2 or 3. Selections grow to whole words, so you never highlight half of “billions”.</li>
+          <li><strong>File it.</strong> Aff or Neg, then the block: Inherency, Solvency, the DA links. Approve it when it’s ready for rounds.</li>
+          <li><strong>Answer it.</strong> Link cards to each other: this card answers that one, supports it, contradicts it. Each card lists its answers, so frontlines write themselves.</li>
+          <li><strong>Read it, print it, paste it.</strong> Full card, read-aloud, or plain text. Copy into Word with Verbatim formatting (cyan highlight, boxed emphasis, small unread text) or print a whole file as a speech doc.</li>
+          <li><strong>See who changed what.</strong> Every change is saved with your name and the time, so a card’s whole history is a click away.</li>
         </ul>
+      </section>
+
+      <section class="gap">
+        <h2>Scythe reads with you</h2>
+        <p>Under the cutter is spaCy, the language library researchers use. It checks the words in every card you save, so your marks land on Scythe’s word boundaries. It also finds the people, organizations, places and dates in a card: the start of your quals.</p>
+        <p class="note">Coming next: suggested highlights that learn from your team’s approved cards, and finding every card that quotes the same person. They’re written down as tests before a line of them is built.</p>
+      </section>
+
+      <section class="inverse gap">
+        <h2>What Scythe will never do</h2>
+        <ul class="list">
+          <li>Rewrite, summarize or “improve” a card. There is no AI writing anywhere in Scythe.</li>
+          <li>Keep your evidence somewhere you can’t take it with you.</li>
+          <li>Throw away a save without telling you whose save won.</li>
+        </ul>
+      </section>
+
+      <section class="gap">
+        <h2>Who it’s for</h2>
+        <p>Policy, LD and PF debaters who cut their own evidence. Coaches who want to see what their squad cut and approve what’s ready. Partners prepping the same file at 1 a.m. And anyone labeling text who wants their labels to mean something: every card you cut can also become training data.</p>
       </section>
 
       <section id="signup" class="signup gap">
         <h2>Get early access</h2>
-        <p>Leave an email and we’ll write when Scythe is ready to try. Nothing else.</p>
+        <p>Scythe works today if you’re comfortable signing in with a GitHub key. Leave an email and we’ll write when sign-in is one click and your team can start in a minute. Nothing else, ever.</p>
         <form id="signup-form" novalidate>
           <div class="row">
             <label for="email" class="hp">Email</label>
@@ -71,19 +100,12 @@
       </section>
     </main>
 
-    <footer style="margin-top:5rem">
-      <p class="note">Scythe is built for debaters, coaches and anyone labeling text with spaCy.</p>
+    <footer>
+      <p>Scythe is open source. The app, and every feature it promises written down as a test, are public at <a href="https://github.com/joegr/scythe">github.com/joegr/scythe</a>.</p>
     </footer>
   </div>
 
   <script>
-    // Preview toggle: same tokens shown as a card or as stored span groups.
-    const preview = document.getElementById('preview')
-    preview.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => {
-      preview.classList.toggle('as-spans', b.dataset.view === 'spans')
-      preview.querySelectorAll('[data-view]').forEach((o) => o.classList.toggle('on', o === b))
-    }))
-
     // Signup: POST the email to the relay, which saves it to a private GitHub repo.
     const form = document.getElementById('signup-form')
     const status = document.getElementById('signup-status')

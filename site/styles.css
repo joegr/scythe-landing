@@ -66,23 +66,38 @@ kbd { font: inherit; border-bottom: 1px solid var(--ink); }
 .t-hl.t-em { text-decoration-thickness: 2px; }
 .t-ner { text-decoration: underline dotted var(--ink); text-underline-offset: .3em; }
 
-/* Views of the same tokens: as a card, or as the span groups spaCy stores. */
-.preview .spans { display: none; }
-.preview.as-spans .card-body { display: none; }
-.preview.as-spans .spans { display: block; }
-.spans { margin-top: 1rem; white-space: pre-wrap; word-break: break-word; font: inherit; }
+/* ---------- landing: loud through ink, weight and rules, never through type size ---------- */
+.banner { background: var(--ink); color: var(--paper); padding-bottom: 4rem; }
+.banner a, .inverse a { color: var(--paper); text-decoration-color: var(--paper); }
+.banner .top { padding-bottom: 4rem; }
+.hero h1 { text-transform: uppercase; letter-spacing: .04em; border-bottom: 3px solid var(--paper); padding-bottom: 1rem; }
+.hero .action { background: var(--paper); color: var(--ink); text-decoration: none; }
+a.action { display: inline-block; text-decoration: none; }
 
-/* ---------- landing ---------- */
-.lede { font-size: 1rem; }
+main { padding-top: 4rem; }
+main h2 { text-transform: uppercase; letter-spacing: .04em; border-bottom: 3px solid var(--ink); padding-bottom: .5rem; }
+
+.beliefs { padding-left: 0; list-style: none; counter-reset: belief; }
+.beliefs > li { counter-increment: belief; padding: 1rem 0 1rem 2.5rem; border-top: 1px solid var(--rule); position: relative; }
+.beliefs > li:first-child { border-top: 0; }
+.beliefs > li::before { content: counter(belief); position: absolute; left: 0; font-weight: 600; border-bottom: 3px solid var(--ink); line-height: 1.2; }
+
+.inverse { background: var(--ink); color: var(--paper); padding: 2rem 1.5rem; margin-left: -1.5rem; margin-right: -1.5rem; }
+.inverse h2 { border-bottom-color: var(--paper); }
+.inverse .t-u, .inverse .t-hl, .inverse .t-em { text-decoration-color: var(--paper); }
+.inverse .list > li { border-top-color: rgba(251, 250, 247, .35); }
+.inverse .key { border-top: 1px solid rgba(251, 250, 247, .35); padding-top: 1rem; }
+
 .list { list-style: none; padding: 0; }
 .list > li { padding: .55rem 0; border-top: 1px solid var(--rule); }
 .list > li:first-child { border-top: 0; }
 .signup .row { flex-wrap: nowrap; }
 .signup .field { flex: 1; min-width: 0; }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
-footer { color: var(--ink); }
+footer { margin-top: 5rem; border-top: 3px solid var(--ink); padding-top: 1rem; }
 
 @media (max-width: 480px) {
+  .inverse { margin-left: -1rem; margin-right: -1rem; padding: 1.5rem 1rem; }
   .signup .row { flex-wrap: wrap; }
   .signup .action { width: 100%; }
 }
