@@ -101,3 +101,10 @@ footer { margin-top: 5rem; border-top: 3px solid var(--ink); padding-top: 1rem; 
   .signup .row { flex-wrap: wrap; }
   .signup .action { width: 100%; }
 }
+
+/* ---------- the undertaker (index only; drawn by undertaker.js) ---------- */
+.banner { position: relative; overflow: hidden; padding-bottom: 14rem; }
+.undertaker { position: absolute; left: 0; bottom: 0; display: block; pointer-events: none; }
+.undertaker .stroke { fill: none; stroke: var(--paper); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.undertaker .stroke.thin { stroke-width: 1.4; }
+.undertaker .solid { fill: var(--paper); stroke: none; }
