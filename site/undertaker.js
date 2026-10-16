@@ -1,12 +1,14 @@
-// The undertaker: a Quixote-thin stick figure in a top hat, scythe over his shoulder. The big
-// "scythe" letters are his ground. Their top edge is traced from the glyphs themselves (the curve
-// of the 's', the slope of the 't', the 'h' stem and its shoulder) and every step lands on it: a
-// foot is planted where it touches down and stays put while his body passes over it, then lifts and
-// swings to the next spot on the contour. The legs are solved from hip to planted foot, so the knees
-// bend to whatever the letter does underfoot. Every so often he walks to a letter, gathers his feet,
-// bends his knees and sits on its top edge, legs swinging round toward you and hanging over the
-// letter's face, the scythe upright beside him like a staff. Then he stands and strolls on. Nothing
-// snaps. Reach for him and he springs up and bolts. With reduced motion he just sits on the 'h'.
+// The undertaker: a Quixote-thin stick figure in a top hat, scythe over his shoulder. He walks back
+// and forth across the whole header on one flat plane, level with the tops of the short letters,
+// and the big "scythe" letters stand on it. Over the word the ground is the top edge traced from the
+// glyphs themselves (the curve of the 's', the slope of the 't', the 'h' stem and its shoulder) and
+// every step lands on it: a foot is planted where it touches down and stays put while his body
+// passes over it, then lifts and swings to the next spot. The legs are solved from hip to planted
+// foot, so the knees bend to whatever is underfoot. Every so often he walks to a letter, gathers his
+// feet, bends his knees and sits on its top edge, legs swinging round toward you and hanging over
+// the letter's face, the scythe upright beside him like a staff. Then he stands and strolls on.
+// Nothing snaps. Reach for him and he springs up and runs: leaning in, knees driving, heels kicking
+// up, both feet off the ground between strides. With reduced motion he just sits on the 'h'.
 ;(() => {
   const svgEl = document.getElementById('undertaker')
   const banner = svgEl && svgEl.closest('.banner')
@@ -38,12 +40,14 @@
   const lerpP = (a, b, t) => [mx(a[0], b[0], t), mx(a[1], b[1], t)]
   const smooth = (v) => (v <= 0 ? 0 : v >= 1 ? 1 : v * v * (3 - 2 * v))
 
-  // ---------------------------------------------------------------- the ground: the top edge of the ink
-  // Each letter is drawn on a canvas at its place on the page, in the wordmark's font, and every
-  // pixel column is scanned for its first inked pixel. Notches narrower than a foot (between the
-  // arms of the 'y', the gaps between letters) are bridged, so he steps over them, not into them.
+  // ---------------------------------------------------------------- the ground: one flat plane, and the letters on it
+  // The ground runs the full width of the header at the height of the short letters' tops. Over the
+  // word it is the top edge of the ink: each letter is drawn on a canvas at its place on the page, in
+  // the wordmark's font, and every pixel column is scanned for its first inked pixel. Notches narrower
+  // than a foot (between the arms of the 'y', the gaps between letters, the rounded outer edges of
+  // the 's' and 'e' where they meet the plane) are bridged, so he steps over them, not into them.
   let letters = [] // {ch, cx, left, right} in banner coordinates
-  let span = [0, 0], prof = null, px0 = 0 // prof[i]: the ground's height at x = px0 + i
+  let span = [0, 0], prof = null // prof[x]: the ground's height at banner column x
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
 
@@ -68,37 +72,47 @@
     if (!letters.length) return
     span = [letters[0].left, letters[letters.length - 1].right]
 
-    px0 = Math.floor(span[0]) - 2
-    const W = Math.ceil(span[1]) - px0 + 4, top0 = Math.floor(baseline - size * 1.1), H = Math.ceil(baseline - top0) + 2
+    const cx0 = Math.floor(span[0]) - 2
+    const W = Math.ceil(span[1]) - cx0 + 4, top0 = Math.floor(baseline - size * 1.1), H = Math.ceil(baseline - top0) + 2
     canvas.width = W; canvas.height = H
     ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
     ctx.textBaseline = 'alphabetic'
-    for (const l of letters) ctx.fillText(l.ch, l.left - px0, baseline - top0)
+    for (const l of letters) ctx.fillText(l.ch, l.left - cx0, baseline - top0)
     const ink = ctx.getImageData(0, 0, W, H).data
-    const raw = new Array(W).fill(Infinity)
-    for (let i = 0; i < W; i++) {
-      for (let j = 0; j < H; j++) if (ink[(j * W + i) * 4 + 3] > 110) { raw[i] = top0 + j; break }
+    const N = Math.ceil(width) + 1
+    const raw = new Array(N).fill(Infinity)
+    let first = Infinity, lastInk = -Infinity
+    for (let c = 0; c < W; c++) {
+      const i = cx0 + c
+      if (i < 0 || i >= N) continue
+      for (let j = 0; j < H; j++) {
+        if (ink[(j * W + c) * 4 + 3] > 110) { raw[i] = top0 + j; first = Math.min(first, i); lastInk = Math.max(lastInk, i); break }
+      }
     }
+    // The plane: the most common top edge, which is the top of the short letters.
+    const tops = raw.filter(Number.isFinite).sort((a, b) => a - b)
+    const level = tops.length ? tops[Math.floor(tops.length / 2)] : baseline - size * 0.5
+    for (let i = 0; i < N; i++) if (i < first || i > lastInk) raw[i] = level
     const w = Math.round(size * 0.22)
     prof = raw.map((v, i) => {
       let l = Infinity, r = Infinity
       for (let k = Math.max(0, i - w); k <= i; k++) l = Math.min(l, raw[k])
-      for (let k = i; k <= Math.min(W - 1, i + w); k++) r = Math.min(r, raw[k])
+      for (let k = i; k <= Math.min(N - 1, i + w); k++) r = Math.min(r, raw[k])
       return Math.min(v, Math.max(l, r))
     })
-    // Wider gaps: a straight line between the edges on either side; past the ends, level ground.
-    for (let i = 0; i < W;) {
+    // Wider gaps inside the word: a straight line between the edges on either side.
+    for (let i = 0; i < N;) {
       if (isFinite(prof[i])) { i++; continue }
       let j = i
-      while (j < W && !isFinite(prof[j])) j++
-      const a = i > 0 ? prof[i - 1] : j < W ? prof[j] : baseline, b = j < W ? prof[j] : a
+      while (j < N && !isFinite(prof[j])) j++
+      const a = i > 0 ? prof[i - 1] : level, b = j < N ? prof[j] : a
       for (let k = i; k < j; k++) prof[k] = mx(a, b, (k - i + 1) / (j - i + 1))
       i = j
     }
   }
-  function ground(px) {
+  function ground(px) { // off either edge of the header the plane carries on, level
     if (!prof) return HEIGHT * 0.4
-    const f = Math.min(prof.length - 1, Math.max(0, px - px0)), i = Math.floor(f)
+    const f = Math.min(prof.length - 1, Math.max(0, px)), i = Math.floor(f)
     return mx(prof[i], prof[Math.min(prof.length - 1, i + 1)], f - i)
   }
 
@@ -107,21 +121,22 @@
   let runBlend = 0   // 0 walking … 1 running
   let sitBlend = 0   // 0 standing … 1 seated
   let target = null  // the letter he is walking to, or sitting on
-  const feet = [{ x: 0, y: 0 }, { x: 0, y: 0 }] // page positions; planted unless one is swinging
-  let swing = null   // {i, from: [x, y], to: x, t, dur}: the foot in the air
-  let steps = 0, hipY = 0
+  const feet = [{ x: 0, y: 0 }, { x: 0, y: 0 }] // page positions; planted unless that foot is swinging
+  const swings = [null, null] // per foot, while it is in the air: {from: [x, y], to: x, t, dur}
+  let phase = 0, hipY = 0 // phase drives the arms and coat: π per step
   let sit0 = null    // where he stood when he began to sit: {hipY, feet}
   const S = { STROLL: 0, APPROACH: 1, SITTING: 2, SEATED: 3, RISING: 4, RUN: 5 }
   let state = S.STROLL, timer = 3 + Math.random() * 3
 
-  const WALK = { speed: 34, step: 30, lean: 0.06, arm: 0.35 }
-  const RUN = { speed: 230, step: 120, lean: 0.42, arm: 1.0 }
+  // step: how far apart the feet land. height: the hip, as a share of a straight leg.
+  const WALK = { speed: 34, step: 30, height: 0.95, lean: 0.06, arm: 0.35 }
+  const RUN = { speed: 230, step: 80, height: 0.86, lean: 0.42, arm: 1.0 }
 
-  const standingHip = () => (feet[0].y + feet[1].y) / 2 - REACH * 0.95
+  const standingHip = () => (feet[0].y + feet[1].y) / 2 - REACH * WALK.height
   function plantFeet() {
     feet[0].x = x - 4 * dir; feet[1].x = x + 4 * dir
     for (const f of feet) f.y = ground(f.x)
-    swing = null
+    swings[0] = swings[1] = null
     hipY = standingHip()
     if (sitBlend > 0) sit0 = { hipY, feet: feet.map((f) => ({ ...f })) }
   }
@@ -175,7 +190,6 @@
   // t: 0 walking … 1 running. m: how much of the swagger is left (0 when he stands still).
   function walkPose(t, m) {
     const g = (k) => mx(WALK[k], RUN[k], t)
-    const phase = (steps + (swing ? smooth(swing.t) : 0)) * Math.PI
     const lean = g('lean') * m
     const hip = [0, 0]
     const legs = [leg(feet[0], hipY), leg(feet[1], hipY)]
@@ -247,40 +261,53 @@
   }
 
   // ---------------------------------------------------------------- stepping
-  function startStep(i, to) {
-    const stepLen = Math.abs(to - feet[i].x)
-    swing = { i, from: [feet[i].x, feet[i].y], to, t: 0, dur: Math.min(0.42, Math.max(0.12, (0.6 * stepLen) / Math.max(speed, 24))) }
-  }
+  // Walking, one foot is always down: a foot leaves only once the other has landed. Running, the
+  // trailing foot pushes off before the leading one lands, so for a moment both are in the air;
+  // it also lets go early rather than stretch the leg straight behind him, and it lands just ahead
+  // of where his hip will be by then. The hip holds a running crouch instead of being hauled about
+  // by whichever foot is planted.
   function stepFeet(dt) {
-    const stepLen = mx(WALK.step, RUN.step, runBlend)
-    if (!swing) {
-      const behind = feet.map((f) => (x - f.x) * dir)
-      const i = behind[0] > behind[1] ? 0 : 1
-      if (speed > 3 && behind[i] > stepLen * 0.5) {
-        startStep(i, x + dir * (stepLen * 0.5 + speed * 0.12)) // land a little ahead of where the hip will be
-      } else if (speed <= 3 && Math.abs(feet[0].x - feet[1].x) > 10) {
+    const run = runBlend, stepLen = mx(WALK.step, RUN.step, run), moving = speed > 3
+    const order = [0, 1].sort((a, b) => (x - feet[b].x) * dir - (x - feet[a].x) * dir) // trailing foot first
+    for (const i of order) {
+      if (swings[i]) continue
+      const f = feet[i], other = swings[1 - i]
+      const behind = (x - f.x) * dir
+      const tooFar = Math.hypot(f.x - x, f.y - hipY) > REACH * 0.97
+      const free = !other || (run > 0.5 && other.t > 0.55)
+      if (moving && free && (behind > stepLen * mx(0.5, 0.35, run) || tooFar)) {
+        const dur = mx(Math.min(0.42, Math.max(0.2, (0.6 * stepLen) / Math.max(speed, 24))), 0.2, run)
+        const to = x + dir * (speed * dur * mx(0.5, 1, run) + stepLen * mx(0.5, 0.3, run))
+        swings[i] = { from: [f.x, f.y], to, t: 0, dur }
+      } else if (!moving && !other && Math.abs(feet[0].x - feet[1].x) > 10 && Math.abs(f.x - x) >= Math.abs(feet[1 - i].x - x)) {
         // Coming to a stop: bring the far foot in beside the other.
-        const j = Math.abs(feet[0].x - x) > Math.abs(feet[1].x - x) ? 0 : 1
-        startStep(j, x + (feet[1 - j].x < x ? 4 : -4))
+        swings[i] = { from: [f.x, f.y], to: x + (feet[1 - i].x < x ? 4 : -4), t: 0, dur: 0.3 }
       }
     }
-    if (swing) {
-      swing.t = Math.min(1, swing.t + dt / swing.dur)
-      const f = feet[swing.i], e = smooth(swing.t)
-      f.x = mx(swing.from[0], swing.to, e)
-      const lift = mx(7, 14, runBlend) * Math.sin(Math.PI * swing.t)
-      f.y = Math.min(mx(swing.from[1], ground(swing.to), e), ground(f.x)) - lift // never through the letter
-      if (swing.t >= 1) { f.x = swing.to; f.y = ground(f.x); swing = null; steps++ }
-    }
-    // The hip rides above the feet, a touch higher mid-stride, and never farther than a leg from a planted foot.
-    const want = Math.min((feet[0].y + feet[1].y) / 2, ground(x)) - REACH * mx(0.95, 0.88, runBlend) -
-      (swing ? Math.sin(Math.PI * swing.t) * 2 * SCALE : 0)
-    hipY += (want - hipY) * Math.min(1, dt * 10)
-    feet.forEach((f, i) => {
-      if (swing && swing.i === i) return
-      const dx = Math.abs(f.x - x), r = REACH * 0.99
-      if (dx < r) hipY = Math.max(hipY, f.y - Math.sqrt(r * r - dx * dx))
+    let air = 0 // how high the hip rides: up while a foot is passing under it
+    swings.forEach((s, i) => {
+      if (!s) return
+      s.t = Math.min(1, s.t + dt / s.dur)
+      const f = feet[i], e = smooth(s.t)
+      f.x = mx(s.from[0], s.to, e)
+      // Running, the heel kicks up behind and the knee drives through.
+      const lift = mx(7, 24, run) * Math.sin(Math.PI * Math.pow(s.t, mx(1, 0.7, run)))
+      f.y = Math.min(mx(s.from[1], ground(s.to), e), ground(f.x)) - lift // never through the letter
+      air = Math.max(air, Math.sin(Math.PI * s.t))
+      if (s.t >= 1) { f.x = s.to; f.y = ground(f.x); swings[i] = null }
     })
+    phase += dt * Math.PI * speed / Math.max(stepLen, 1)
+
+    const down = [0, 1].filter((i) => !swings[i])
+    const under = down.length ? down.reduce((a, i) => a + feet[i].y, 0) / down.length : ground(x)
+    const want = Math.min(under, ground(x)) - REACH * mx(WALK.height, RUN.height, run) - air * mx(2, 4, run) * SCALE
+    hipY += (want - hipY) * Math.min(1, dt * mx(10, 14, run))
+    if (run < 0.5) { // walking: never farther than a leg from a planted foot
+      for (const i of down) {
+        const dx = Math.abs(feet[i].x - x), r = REACH * 0.99
+        if (dx < r) hipY = Math.max(hipY, feet[i].y - Math.sqrt(r * r - dx * dx))
+      }
+    }
   }
 
   // ---------------------------------------------------------------- startled
@@ -326,7 +353,7 @@
         const d = target.cx - x
         if (Math.abs(d) > 1.5) dir = d < 0 ? -1 : 1
         wantSpeed = WALK.speed * Math.min(1, Math.abs(d) / 24) // decelerate onto the spot
-        const gathered = !swing && Math.abs(feet[0].x - feet[1].x) <= 10
+        const gathered = !swings[0] && !swings[1] && Math.abs(feet[0].x - feet[1].x) <= 10
         if (Math.abs(d) < 1.5 && speed < 2 && gathered) {
           speed = 0; state = S.SITTING
           sit0 = { hipY, feet: feet.map((f) => ({ ...f })) }
@@ -358,15 +385,15 @@
       x += dir * speed * dt
       if (state === S.APPROACH && (target.cx - before) * (target.cx - x) < 0) x = target.cx // never overshoot
 
-      if (state === S.STROLL) { // pace the word, turning at its ends
-        if (x > span[1] - 8 && dir > 0) dir = -1
-        if (x < span[0] + 8 && dir < 0) dir = 1
+      if (state === S.STROLL) { // the whole width of the header, back and forth
+        if (x > width - 60 && dir > 0) dir = -1
+        if (x < 60 && dir < 0) dir = 1
       } else if (state === S.RUN) { // leave one side, come back in from the other, feet and all
         const shift = x > width + 90 ? -(width + 180) : x < -90 ? width + 180 : 0
         if (shift) {
           x += shift
           for (const f of feet) { f.x += shift; f.y = ground(f.x) }
-          if (swing) { swing.from[0] += shift; swing.to += shift }
+          for (const s of swings) if (s) { s.from[0] += shift; s.to += shift }
         }
       }
       stepFeet(dt)
