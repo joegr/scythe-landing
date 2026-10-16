@@ -23,6 +23,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # The undertaker (site/undertaker.js) ships with the page; a syntax error stops the deploy.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the undertaker script
+        run: node --check site/undertaker.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
