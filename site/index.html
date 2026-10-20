@@ -13,7 +13,7 @@
     gtag('config', 'G-5445WH0KNH');
   </script>
   <title>scythe</title>
-  <meta name="description" content="Scythe is a card cutter for debaters. Cut evidence word for word, mark it up, file it, and never lose your partner's work. Your team's evidence lives on GitHub, where your team owns it.">
+  <meta name="description" content="Scythe is where debaters cut, mark up and file their cards. Every card is the author's exact words, and nothing your partner cut ever gets lost.">
   <link rel="stylesheet" href="styles.css">
   <!-- Where the signup form posts: the relay in relay/, which writes to a private repo. -->
   <meta name="signup-endpoint" content="https://scythe-signup.fly.dev/">
@@ -29,10 +29,9 @@
       </nav>
       <div class="wordmark" id="wordmark">scythe</div>
       <section class="gap hero">
-        <h1>Evidence is verbatim, or it isn’t evidence.</h1>
-        <p>Scythe is a card cutter for high school and college debaters. Cut the author’s exact words, mark them up on whole words, file them into your blocks, and walk into round knowing every card says what the article says.</p>
+        <h1>Cut cards the way they should be cut.</h1>
+        <p>Scythe is where you and your team cut, mark up and file evidence. Every card is the author’s exact words, every highlight lands where you put it, and nothing your partner cut ever gets lost.</p>
         <p><a class="action" href="#signup">Get early access</a></p>
-        <p><em>Prodigy for les terminales: the tool serious labelers use, rebuilt for people who have a tournament on Saturday.</em></p>
       </section>
     </div>
     <!-- The undertaker: drawn and walked by undertaker.js. Decorative, so hidden from screen readers. -->
@@ -44,57 +43,57 @@
       <section id="why" class="gap">
         <h2>What we believe</h2>
         <ol class="beliefs">
-          <li><strong>Never rewrite the author.</strong> Scythe cuts the exact characters of the source. You can’t paraphrase inside a card, and a pasted quote is matched back to the article, curly quotes, dashes and all, so you can’t “clean it up” either.</li>
-          <li><strong>Your highlighting is your argument.</strong> What you underline and highlight is what you read in the speech, so Scythe treats it as real data. Every mark snaps to whole words, nothing drifts, and the read-aloud version is exactly what you marked.</li>
-          <li><strong>Nobody loses a card because their partner saved first.</strong> If two of you edit the same card in the same second, Scythe stops the second save and shows both changes. Add yours to theirs, keep theirs, or keep yours. The other version stays in the card’s history either way.</li>
-          <li><strong>Your team owns its evidence.</strong> Cards live in a GitHub repository your team controls, not in a company’s database. If Scythe disappeared tomorrow, every card, cite and highlight would still be there as plain files.</li>
-          <li><strong>Every card has a resolution.</strong> All 542 past NSDA topics (Policy, LD, PF and Big Questions) are built in, and you can write your own. A card that isn’t filed under a topic gets lost by February.</li>
+          <li><strong>A card is what the author wrote.</strong> Scythe only lets you cut the author’s own words. You can’t paraphrase inside a card or “clean up” a quote. If you paste something in, Scythe checks it against the article, word for word.</li>
+          <li><strong>What you highlight is what you read.</strong> Your underlining and highlighting is your speech, so it should be exact. Marks always cover whole words, they never slide around, and the read-aloud version is exactly what you marked.</li>
+          <li><strong>Your partner’s work never disappears.</strong> If you both edit the same card at once, Scythe shows you both versions and you decide: keep yours, keep theirs, or combine them. Older versions are always saved.</li>
+          <li><strong>Your evidence belongs to your team.</strong> You can take every card, cite and highlight with you whenever you want. If Scythe went away tomorrow, your files would still be yours.</li>
+          <li><strong>Every card belongs to a topic.</strong> Every past NSDA resolution for Policy, LD, PF and Big Questions is already built in, and you can add your own. Cards that aren’t filed under a topic are gone by February.</li>
         </ol>
       </section>
 
       <section class="inverse gap" aria-label="A sample card in Scythe">
-        <p class="card-tag">Sample card: formatting never touches the author’s words</p>
+        <p class="card-tag">Sample card: your formatting never changes the author’s words</p>
         <p class="card-cite"><strong>Lastname 24</strong>, Author Name, the author’s quals, “Article Title”, Publication, 3-14-2024, link</p>
-        <p class="card-body">Every card is cut <span class="t-u">verbatim from the source</span>. The <span class="t-u"><span class="t-hl">underlines, highlights and</span> <span class="t-hl t-em">emphasis</span></span> you add <span class="t-u">sit on top of the author’s words</span> and <span class="t-u"><span class="t-hl">never change them</span>, so what you read is what they wrote</span>.</p>
-        <p class="key"><span class="t-u">underline</span> · <span class="t-hl">highlight</span> · <span class="t-hl t-em">emphasis</span>. One key each: 1, 2, 3.</p>
+        <p class="card-body">Every card is cut <span class="t-u">straight from the article</span>. The <span class="t-u"><span class="t-hl">underlining, highlighting and</span> <span class="t-hl t-em">emphasis</span></span> you add <span class="t-u">go on top of the author’s words</span> and <span class="t-u"><span class="t-hl">never change them</span>, so what you read is what they wrote</span>.</p>
+        <p class="key"><span class="t-u">underline</span> · <span class="t-hl">highlight</span> · <span class="t-hl t-em">emphasis</span>. Press 1, 2 or 3.</p>
       </section>
 
       <section id="how" class="gap">
         <h2>How it works</h2>
         <ul class="list">
-          <li><strong>Open the article.</strong> Paste a link and Scythe reads the page for you, or paste the text from a paywalled article or a PDF. The source gets a cite drafted from its author, date and publication.</li>
-          <li><strong>Cut.</strong> Select the passage, or paste one you copied earlier and Scythe finds it. Write the tag, check the cite, cut. The card is the source’s words, nothing else.</li>
-          <li><strong>Mark it up.</strong> Select and press 1, 2 or 3. Selections grow to whole words, so you never highlight half of “billions”.</li>
-          <li><strong>File it.</strong> Aff or Neg, then the block: Inherency, Solvency, the DA links. Approve it when it’s ready for rounds.</li>
-          <li><strong>Answer it.</strong> Link cards to each other: this card answers that one, supports it, contradicts it. Each card lists its answers, so frontlines write themselves.</li>
-          <li><strong>Read it, print it, paste it.</strong> Full card, read-aloud, or plain text. Copy into Word with Verbatim formatting (cyan highlight, boxed emphasis, small unread text) or print a whole file as a speech doc.</li>
-          <li><strong>See who changed what.</strong> Every change is saved with your name and the time, so a card’s whole history is a click away.</li>
+          <li><strong>Find the article.</strong> Paste a link, or paste the text if it’s behind a paywall or in a PDF. Scythe starts the cite for you with the author, date and publication.</li>
+          <li><strong>Cut.</strong> Select the part you want, write your tag, check the cite, and cut it.</li>
+          <li><strong>Mark it up.</strong> Select words and press 1, 2 or 3. You’ll never highlight half a word by accident.</li>
+          <li><strong>File it.</strong> Put it on the aff or the neg, then in the right block: inherency, solvency, a DA link. Mark it ready when it’s good to read in round.</li>
+          <li><strong>Answer it.</strong> Connect cards to each other: this one answers that one, this one backs it up. Every card shows its answers, so your frontlines are already there.</li>
+          <li><strong>Read it, print it, paste it.</strong> Read the full card or just the highlighted part. Paste it into Word with Verbatim formatting, or print a whole file as your speech doc.</li>
+          <li><strong>See who changed what.</strong> Every edit shows who made it and when.</li>
         </ul>
       </section>
 
       <section class="gap">
-        <h2>Scythe reads with you</h2>
-        <p>Under the cutter is spaCy, the language library researchers use. It checks the words in every card you save, so your marks land on Scythe’s word boundaries. It also finds the people, organizations, places and dates in a card: the start of your quals.</p>
-        <p class="note">Coming next: suggested highlights that learn from your team’s approved cards, and finding every card that quotes the same person. They’re written down as tests before a line of them is built.</p>
+        <h2>Help with the boring parts</h2>
+        <p>Scythe picks out the people, organizations, places and dates in each card, so writing quals and cites goes faster.</p>
+        <p class="note">Coming soon: highlighting suggestions based on cards your team has already approved, and a way to find every card that quotes the same author.</p>
       </section>
 
       <section class="inverse gap">
         <h2>What Scythe will never do</h2>
         <ul class="list">
-          <li>Rewrite, summarize or “improve” a card. There is no AI writing anywhere in Scythe.</li>
-          <li>Keep your evidence somewhere you can’t take it with you.</li>
-          <li>Throw away a save without telling you whose save won.</li>
+          <li>Rewrite, summarize or “improve” your cards. Scythe never writes evidence for you.</li>
+          <li>Lock your evidence in so you can’t leave with it.</li>
+          <li>Throw away your work without telling you.</li>
         </ul>
       </section>
 
       <section class="gap">
         <h2>Who it’s for</h2>
-        <p>Policy, LD and PF debaters who cut their own evidence. Coaches who want to see what their squad cut and approve what’s ready. Partners prepping the same file at 1 a.m. And anyone labeling text who wants their labels to mean something: every card you cut can also become training data.</p>
+        <p>Policy, LD and PF debaters who cut their own cards. Coaches who want to see what the squad has cut and sign off on what’s ready. Partners finishing the same file at 1 a.m. before a tournament.</p>
       </section>
 
       <section id="signup" class="signup gap">
         <h2>Get early access</h2>
-        <p>Scythe isn’t open to teams yet. Leave an email and we’ll write when it’s ready for your squad. Nothing else, ever.</p>
+        <p>Scythe isn’t open yet. Leave your email and we’ll let you know when your squad can start. That’s the only email we’ll send.</p>
         <form id="signup-form" novalidate>
           <div class="row">
             <label for="email" class="hp">Email</label>
@@ -109,7 +108,7 @@
     </main>
 
     <footer>
-      <p>Scythe is built for debaters, by people who cut cards.</p>
+      <p>Made for debaters, by people who cut cards.</p>
     </footer>
   </div>
 
