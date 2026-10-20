@@ -9,12 +9,19 @@
 // the letter's face, the scythe upright beside him like a staff. Then he stands and strolls on.
 // Nothing snaps. Reach for him and he springs up and runs: leaning in, knees driving, heels kicking
 // up, both feet off the ground between strides. With reduced motion he just sits on the 'h'.
-;(() => {
-  const svgEl = document.getElementById('undertaker')
-  const banner = svgEl && svgEl.closest('.banner')
-  const wordmark = document.getElementById('wordmark')
-  if (!svgEl || !banner || !wordmark || !window.d3) return
-  const d3 = window.d3
+//
+// He makes an entrance: upside down, he peeks in at you from the top of the frame, hands on its edge,
+// looks one way and the other, and pulls back out of sight. A beat later he drops in, arms up, coat
+// tails flying, his hat floating a little above his head, lands on the letters with his knees giving,
+// the hat drops back on, and he strolls off.
+//
+// One file for the landing page (scythe-landing/site) and the web app's signed-out page (scythe/frontend):
+// keep the two copies identical. mountUndertaker({ svg, banner, wordmark }) starts him and returns stop().
+
+export function mountUndertaker({ svg: svgEl, banner, wordmark }) {
+  if (!svgEl || !banner || !wordmark) return () => {}
+  const NS = 'http://www.w3.org/2000/svg'
+  let stopped = false
 
   // ---------------------------------------------------------------- body plan (local units, facing right)
   const THIGH = 27, SHIN = 28, TORSO = 36, NECK = 5, HEAD = 6.5
@@ -23,14 +30,20 @@
   const REACH = (THIGH + SHIN) * SCALE // a straight leg, in page pixels
 
   let width = banner.clientWidth, HEIGHT = banner.clientHeight || 800
-  const svg = d3.select(svgEl)
-  const fig = svg.append('g').attr('class', 'figure')
-  const coat = fig.append('path').attr('class', 'stroke thin')
-  const body = fig.append('path').attr('class', 'stroke')
-  const headEl = fig.append('circle').attr('class', 'stroke').attr('r', HEAD)
-  const hat = fig.append('path').attr('class', 'solid')
-  const snath = fig.append('path').attr('class', 'stroke')
-  const blade = fig.append('path').attr('class', 'solid')
+  const part = (parent, tag, cls) => {
+    const e = document.createElementNS(NS, tag)
+    if (cls) e.setAttribute('class', cls)
+    parent.appendChild(e)
+    return e
+  }
+  const fig = part(svgEl, 'g', 'figure')
+  const coat = part(fig, 'path', 'stroke thin')
+  const body = part(fig, 'path', 'stroke')
+  const headEl = part(fig, 'circle', 'stroke')
+  headEl.setAttribute('r', HEAD)
+  const hat = part(fig, 'path', 'solid')
+  const snath = part(fig, 'path', 'stroke')
+  const blade = part(fig, 'path', 'solid')
 
   // ---------------------------------------------------------------- geometry helpers
   const at = (p, a, l) => [p[0] + Math.sin(a) * l, p[1] + Math.cos(a) * l] // angle from straight down
@@ -125,8 +138,8 @@
   const swings = [null, null] // per foot, while it is in the air: {from: [x, y], to: x, t, dur}
   let phase = 0, hipY = 0 // phase drives the arms and coat: π per step
   let sit0 = null    // where he stood when he began to sit: {hipY, feet}
-  const S = { STROLL: 0, APPROACH: 1, SITTING: 2, SEATED: 3, RISING: 4, RUN: 5 }
-  let state = S.STROLL, timer = 3 + Math.random() * 3
+  const S = { STROLL: 0, APPROACH: 1, SITTING: 2, SEATED: 3, RISING: 4, RUN: 5, PEEK: 6, HIDDEN: 7, DROP: 8, LAND: 9 }
+  let state = S.PEEK, timer = 3 + Math.random() * 3
 
   // step: how far apart the feet land. height: the hip, as a share of a straight leg.
   const WALK = { speed: 34, step: 30, height: 0.95, lean: 0.06, arm: 0.35 }
@@ -142,19 +155,21 @@
   }
 
   function layout() {
+    if (stopped) return
     width = banner.clientWidth; HEIGHT = banner.clientHeight || 800
-    svg.attr('width', width).attr('height', HEIGHT)
+    svgEl.setAttribute('width', width); svgEl.setAttribute('height', HEIGHT)
     measureGround()
     if (!letters.length) return
-    if (x === undefined) x = letters[0].cx
+    if (x === undefined) x = letters[Math.min(2, letters.length - 1)].cx // he peeks in over the 'y'
     if (target) target = letters.reduce((a, l) => (Math.abs(l.cx - x) < Math.abs(a.cx - x) ? l : a), letters[0])
     if (target && sitBlend > 0) x = target.cx
-    plantFeet()
+    if (state < S.PEEK) plantFeet() // during the entrance his feet are in the air
   }
-  new ResizeObserver(layout).observe(banner)
+  const resized = new ResizeObserver(layout)
+  resized.observe(banner)
   if (document.fonts) document.fonts.ready.then(layout) // the web font changes every glyph's shape
   layout()
-  if (x === undefined) return
+  if (x === undefined) { resized.disconnect(); svgEl.replaceChildren(); return () => {} }
 
   // ---------------------------------------------------------------- a leg: hip to foot, knee forward
   // f is a foot on the page; the result is in the figure's local units with the hip at the origin.
@@ -179,8 +194,9 @@
     const inner = [top[0] + px * L * 0.5 + ux * 5, top[1] + py * L * 0.5 + uy * 5]
     return `M${top}Q${outer} ${tip}Q${inner} ${top}Z`
   }
-  function topHat(hd, tilt, t) {
-    const ht = tilt - 0.18 * t, cb = up(hd, ht, HEAD - 1)
+  // lift: how far the hat floats above his head (falling, it lags behind him).
+  function topHat(hd, tilt, t, lift = 0) {
+    const ht = tilt - 0.18 * t, cb = up(hd, ht, HEAD - 1 + lift)
     const ax = Math.cos(ht), ay = Math.sin(ht), sd = (p, s) => [p[0] + ax * s, p[1] + ay * s]
     const ct = up(cb, ht, 15)
     return ln(sd(cb, -9), sd(cb, 9), sd(cb, 5), sd(ct, 5), sd(ct, -5), sd(cb, -5)) + 'Z'
@@ -188,25 +204,28 @@
 
   // ---------------------------------------------------------------- walking / running
   // t: 0 walking … 1 running. m: how much of the swagger is left (0 when he stands still).
-  function walkPose(t, m) {
+  // o.raise: 0 … 1, arms flung up and coat tails flying (falling). o.hatLift: the hat floating off his head.
+  function walkPose(t, m, o = {}) {
+    const raise = o.raise || 0
     const g = (k) => mx(WALK[k], RUN[k], t)
     const lean = g('lean') * m
     const hip = [0, 0]
     const legs = [leg(feet[0], hipY), leg(feet[1], hipY)]
     const shoulder = up(hip, lean, TORSO), neck = up(shoulder, lean, NECK), hd = up(neck, lean, HEAD)
     const swingA = g('arm') * m * Math.sin(phase + Math.PI)
-    const bElbow = at(shoulder, swingA - 0.1, UPPER), bHand = at(bElbow, swingA + mx(0.3, 1.4, t), FORE)
-    const fElbow = at(shoulder, mx(0.75, 1.15, t) + 0.08 * m * Math.sin(phase * 2), UPPER)
-    const hand = at(fElbow, mx(1.9, 2.5, t), FORE)
-    const tilt = mx(-0.38, -1.25, t) + 0.05 * m * Math.sin(phase * 2)
+    const bElbow = at(shoulder, mx(swingA - 0.1, Math.PI - 0.7, raise), UPPER)
+    const bHand = at(bElbow, mx(swingA + mx(0.3, 1.4, t), Math.PI - 0.25, raise), FORE)
+    const fElbow = at(shoulder, mx(mx(0.75, 1.15, t) + 0.08 * m * Math.sin(phase * 2), Math.PI - 1.1, raise), UPPER)
+    const hand = at(fElbow, mx(mx(1.9, 2.5, t), Math.PI - 0.6, raise), FORE)
+    const tilt = mx(mx(-0.38, -1.25, t) + 0.05 * m * Math.sin(phase * 2), 0.35, raise)
     const top = up(hand, tilt, mx(78, 70, t)), butt = up(hand, tilt + Math.PI, 20)
-    const flap = Math.sin(phase * 2) * mx(0.08, 0.25, t) * m
-    const tailA = at(hip, -mx(0.35, 1.05, t) * (0.3 + 0.7 * m) - flap, 30)
-    const tailB = at(hip, -mx(0.2, 0.85, t) * (0.3 + 0.7 * m) + flap, 26)
+    const flap = Math.sin(phase * 2) * mx(0.08, 0.25, t) * m + raise * 0.18 * Math.sin(phase * 5)
+    const tailA = at(hip, mx(-mx(0.35, 1.05, t) * (0.3 + 0.7 * m), -2.55, raise) - flap, 30)
+    const tailB = at(hip, mx(-mx(0.2, 0.85, t) * (0.3 + 0.7 * m), -2.2, raise) + flap, 26)
     return {
       body: ln(legs[0].toe, legs[0].foot, legs[0].knee, hip, legs[1].knee, legs[1].foot, legs[1].toe) +
         ln(hip, shoulder, neck) + ln(bHand, bElbow, shoulder, fElbow, hand),
-      coat: ln(tailA, hip, tailB), hd, hatD: topHat(hd, lean, t), snath: ln(butt, top), blade: crescent(top, tilt),
+      coat: ln(tailA, hip, tailB), hd, hatD: topHat(hd, lean, t, o.hatLift || 0), snath: ln(butt, top), blade: crescent(top, tilt),
       hipW: hipY,
     }
   }
@@ -252,12 +271,29 @@
     }
   }
 
-  function draw() {
-    const p = sitBlend > 0 ? sitPose(sitBlend) : walkPose(runBlend, Math.min(1, speed / WALK.speed))
-    fig.attr('transform', `translate(${x.toFixed(1)},${p.hipW.toFixed(1)}) scale(${dir * SCALE},${SCALE})`)
-    body.attr('d', p.body); coat.attr('d', p.coat)
-    headEl.attr('cx', p.hd[0]).attr('cy', p.hd[1])
-    hat.attr('d', p.hatD); snath.attr('d', p.snath); blade.attr('d', p.blade)
+  // ---------------------------------------------------------------- peeking in (upside down, from the top of the frame)
+  // Drawn upright in his own units and flipped: his head and hat hang down into the frame, his arms
+  // reach back up to its top edge, everything below the waist (and the scythe) stays up out of sight.
+  // look: -1 … 1, which way he's looking. hy: the hip's page height, above the top of the frame.
+  function peekPose(look, hy) {
+    const lean = 0.22 * look
+    const hip = [0, 0]
+    const shoulder = up(hip, lean * 0.4, TORSO), neck = up(shoulder, lean, NECK), hd = up(neck, lean, HEAD)
+    // Hands on the edge: in the flipped picture "down" is up, so the arms hang toward the frame's top.
+    const edge = (hy - 0) / SCALE // the frame's top, from the hip, in his units (flipped: positive is up the page)
+    const bElbow = at(shoulder, -0.55, UPPER), fElbow = at(shoulder, 0.55, UPPER)
+    const reach = (el, side) => [el[0] + side * 4, Math.min(el[1] + FORE, edge > 0 ? edge : el[1] + FORE)]
+    return {
+      body: ln(reach(bElbow, -1), bElbow, shoulder, fElbow, reach(fElbow, 1)) + ln(hip, shoulder, neck),
+      coat: '', hd, hatD: topHat(hd, lean, 0), snath: '', blade: '', hipW: hy, flip: true,
+    }
+  }
+
+  function draw(p = sitBlend > 0 ? sitPose(sitBlend) : walkPose(runBlend, Math.min(1, speed / WALK.speed))) {
+    fig.setAttribute('transform', `translate(${x.toFixed(1)},${p.hipW.toFixed(1)}) scale(${dir * SCALE},${(p.flip ? -1 : 1) * SCALE})`)
+    body.setAttribute('d', p.body); coat.setAttribute('d', p.coat)
+    headEl.setAttribute('cx', p.hd[0]); headEl.setAttribute('cy', p.hd[1])
+    hat.setAttribute('d', p.hatD); snath.setAttribute('d', p.snath); blade.setAttribute('d', p.blade)
   }
 
   // ---------------------------------------------------------------- stepping
@@ -312,32 +348,102 @@
 
   // ---------------------------------------------------------------- startled
   function threat(px, py) {
+    if (state >= S.PEEK) return // making his entrance: he isn't to be hurried
     const r = svgEl.getBoundingClientRect()
     if (Math.abs(py - (r.top + hipY)) > 120 || Math.abs(px - (r.left + x)) > 95) return
     if (performance.now() > fleeUntil) dir = px < r.left + x ? 1 : -1 // away from the hand
     fleeUntil = performance.now() + 2200
     state = S.RUN
   }
-  banner.addEventListener('pointermove', (e) => threat(e.clientX, e.clientY))
-  banner.addEventListener('pointerdown', (e) => threat(e.clientX, e.clientY))
+  const onPointer = (e) => threat(e.clientX, e.clientY)
+  banner.addEventListener('pointermove', onPointer)
+  banner.addEventListener('pointerdown', onPointer)
+  const stop = () => {
+    stopped = true
+    cancelAnimationFrame(frame)
+    resized.disconnect()
+    banner.removeEventListener('pointermove', onPointer)
+    banner.removeEventListener('pointerdown', onPointer)
+    svgEl.replaceChildren()
+  }
+  let frame = 0
 
   // ---------------------------------------------------------------- reduced motion: seated on the 'h', still
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const still = () => {
+      if (stopped) return
       const l = letters[4] || letters[letters.length - 1]
-      x = l.cx; sitBlend = 1; plantFeet()
+      x = l.cx; sitBlend = 1; state = S.SEATED; plantFeet()
       draw()
     }
     if (document.fonts) document.fonts.ready.then(still)
     still()
-    return
+    return stop
   }
+
+  // ---------------------------------------------------------------- the entrance
+  // Peeking: down into the frame over 0.7s, a look one way and the other, back up in 0.35s. Hidden a
+  // beat. Then the drop: from above the frame, under gravity, arms up and coat tails flying, the hat
+  // drifting up off his head as he falls. Landing: feet planted on the letters, the hip sinks into
+  // the knees and comes back up, the hat drops back on with a little bounce, and he strolls off.
+  const HEAD_DOWN = (TORSO + NECK + HEAD) * SCALE // hip to the middle of his head
+  const OUT_OF_SIGHT = -(TORSO + NECK + 2 * HEAD + 16) * SCALE - 8 // the hip, with his hat just above the frame
+  const PEEKING = 34 - HEAD_DOWN // the hip, with the middle of his head 34px into the frame
+  const GRAVITY = 1700 // px/s²
+  let t0 = 0, fallV = 0, hatLift = 0, landDepth = 0
 
   // ---------------------------------------------------------------- the loop
   let last = performance.now()
-  d3.timer(() => {
+  const tick = () => {
+    if (stopped) return
+    frame = requestAnimationFrame(tick)
     const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000)
     last = now
+
+    if (state >= S.PEEK) { // the entrance: nothing else happens until he has landed
+      t0 += dt
+      if (state === S.PEEK) {
+        const IN = 0.7, LOOK = 1.7, OUT = 0.35
+        const depth = t0 < IN ? smooth(t0 / IN) : t0 < IN + LOOK ? 1 : 1 - smooth((t0 - IN - LOOK) / OUT)
+        const look = t0 < IN ? 0 : t0 < IN + LOOK ? Math.sin(((t0 - IN) / LOOK) * Math.PI * 2) : 0
+        draw(peekPose(look, mx(OUT_OF_SIGHT, PEEKING, depth)))
+        if (t0 >= IN + LOOK + OUT) { state = S.HIDDEN; t0 = 0 }
+      } else if (state === S.HIDDEN) {
+        draw(peekPose(0, OUT_OF_SIGHT * 2))
+        if (t0 >= 0.55) {
+          state = S.DROP; t0 = 0; fallV = 0
+          hipY = -(REACH + 40) // feet dangling just above the frame
+        }
+      } else if (state === S.DROP) {
+        fallV += GRAVITY * dt
+        hipY += fallV * dt
+        phase += dt * 6
+        hatLift = Math.min(7, hatLift + dt * 14)
+        const dangle = REACH * 0.96
+        feet[0].x = x - 5 * dir; feet[1].x = x + 6 * dir
+        feet[0].y = hipY + dangle; feet[1].y = hipY + dangle - 6
+        const floor = ground(x) - dangle
+        if (hipY >= floor) { // touchdown: feet planted on the letters
+          hipY = floor
+          feet[0].y = ground(feet[0].x); feet[1].y = ground(feet[1].x)
+          landDepth = Math.min(26 * SCALE, fallV * 0.045)
+          state = S.LAND; t0 = 0
+        }
+        draw(walkPose(0, 0, { raise: 1, hatLift }))
+      } else if (state === S.LAND) {
+        const D = 0.55, u = Math.min(1, t0 / D)
+        const stand = (feet[0].y + feet[1].y) / 2 - REACH * WALK.height
+        const sink = u < 0.22 ? smooth(u / 0.22) : 1 - smooth((u - 0.22) / 0.78)
+        hipY = stand + landDepth * sink
+        const settle = Math.min(1, t0 / 0.32)
+        // The hat comes down a beat late and bounces once on his head.
+        const h = t0 < 0.32 ? hatLift * (1 - smooth(settle)) : 1.6 * Math.max(0, Math.sin(((t0 - 0.32) / 0.2) * Math.PI)) * (t0 < 0.52 ? 1 : 0)
+        draw(walkPose(0, 0, { raise: 1 - smooth(Math.min(1, t0 / 0.35)), hatLift: h }))
+        if (u >= 1) { state = S.STROLL; timer = 2 + Math.random() * 3; hatLift = 0; plantFeet() }
+      }
+      return
+    }
+
     const fleeing = now < fleeUntil
 
     if (!fleeing && state === S.RUN) { state = S.STROLL; timer = 2 + Math.random() * 3 }
@@ -399,5 +505,8 @@
       stepFeet(dt)
     }
     draw()
-  })
-})()
+  }
+  draw(peekPose(0, OUT_OF_SIGHT * 2)) // out of sight until the first frame
+  frame = requestAnimationFrame(tick)
+  return stop
+}
