@@ -1,10 +1,11 @@
 # Scythe landing page
 
-A static page on GitHub Pages whose one job is collecting emails. It reuses the type and card styles from `scythe/frontend/src/index.css`.
+A static page on GitHub Pages that collects emails and lets a visitor try cutting a card. It reuses the type and card styles from `scythe-web/frontend/src/index.css`.
 
 | Path | What it is |
 | --- | --- |
-| `site/` | The page: plain HTML and CSS, no build step. GitHub Pages serves this folder. |
+| `site/` | The page: plain HTML, CSS and JS, no build step. GitHub Pages serves this folder. |
+| `site/demo.js` | The "Try it" demo: fetches a Wikipedia article (or any page that allows cross-origin reads, or pasted text), cuts a card of at most 100 words snapped to whole words, marks it with keys 1–3, shows the read-aloud version and copies it for Word. It runs only in the browser and sends nothing to Scythe. |
 | `relay/` | A small Node server on Fly.io. It holds a GitHub token and writes each signup into the private repo `joegr/scythe-signups`. |
 | `.github/workflows/pages.yml` | Deploys `site/` on every push to `main` that touches it. |
 
