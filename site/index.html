@@ -24,6 +24,7 @@
       <nav class="top">
         <a href="./" class="brand">scythe</a>
         <a href="#why">why</a>
+        <a href="#try">try it</a>
         <a href="#how">how it works</a>
         <a href="#print">print</a>
         <a href="#trust">trust</a>
@@ -58,6 +59,58 @@
         <p class="card-cite"><strong>Lastname 24</strong>, Author Name, the author’s credentials, “Article Title”, Publication, 3-14-2024, link</p>
         <p class="card-body">Every card is cut <span class="t-u">directly from the source</span>. <span class="t-u"><span class="t-hl">Underlining, highlighting and</span> <span class="t-hl t-em">emphasis</span></span> <span class="t-u">sit on top of the author’s words</span> and <span class="t-u"><span class="t-hl">never change them</span>, so what you read is what they wrote</span>.</p>
         <p class="key"><span class="t-u">underline</span> · <span class="t-hl">highlight</span> · <span class="t-hl t-em">emphasis</span>. Keys 1, 2 and 3.</p>
+      </section>
+
+      <section id="try" class="demo gap">
+        <h2>Try it: cut a card</h2>
+        <p>Fetch a source, cut a passage and mark it, as in Scythe. This runs in your browser only and saves nothing. A web page can read Wikipedia and the few sites that allow it; Scythe itself reads any link, from your team’s server.</p>
+        <div id="demo" class="gap">
+          <form id="demo-form" class="row demo-fetch">
+            <label for="demo-url" class="hp">Link to a source</label>
+            <input id="demo-url" class="field" type="url" inputmode="url" value="https://en.wikipedia.org/wiki/Nuclear_winter" autocomplete="off" spellcheck="false">
+            <button id="demo-fetch" type="submit" class="action">Fetch</button>
+          </form>
+          <details class="demo-paste">
+            <summary class="link">Or paste the text</summary>
+            <div class="gap">
+              <label for="demo-paste" class="hp">The article’s text</label>
+              <textarea id="demo-paste" class="field" rows="5" placeholder="Paste a paywalled article or a PDF’s text. Line breaks are repaired."></textarea>
+              <p><button id="demo-paste-go" type="button" class="link">Use this text</button></p>
+            </div>
+          </details>
+          <p id="demo-status" role="status" hidden></p>
+
+          <div id="demo-source-wrap" class="demo-source-wrap" hidden>
+            <p class="demo-label">Source</p>
+            <div id="demo-source" class="demo-source" tabindex="0" aria-label="The source’s text. Select a passage to cut."></div>
+          </div>
+          <p id="demo-cut-row" class="row" hidden><button id="demo-cut" type="button" class="action">Cut the selection</button> <span>or press <kbd>Enter</kbd>. At most 100 words.</span></p>
+
+          <div id="demo-card" class="gap" hidden>
+            <div class="demo-fields">
+              <label class="demo-label" for="demo-tag">Tag</label>
+              <input id="demo-tag" class="field" placeholder="What the card proves" autocomplete="off">
+              <label class="demo-label" for="demo-cite">Cite</label>
+              <input id="demo-cite" class="field" autocomplete="off">
+            </div>
+            <div class="row demo-marks" role="toolbar" aria-label="Marks">
+              <button type="button" class="demo-mark" data-style="underline"><span class="t-u">underline</span> <kbd>1</kbd></button>
+              <button type="button" class="demo-mark" data-style="highlight"><span class="t-hl">highlight</span> <kbd>2</kbd></button>
+              <button type="button" class="demo-mark" data-style="emphasis"><span class="t-hl t-em">emphasis</span> <kbd>3</kbd></button>
+            </div>
+            <article class="card" aria-label="Your card">
+              <p id="demo-tag-out" class="card-tag">Untagged</p>
+              <p id="demo-cite-out" class="card-cite"></p>
+              <div id="demo-body" class="card-body gap"></div>
+              <p class="card-meta"><span id="demo-count"></span></p>
+            </article>
+            <div class="row">
+              <button id="demo-full" type="button" class="link on">Full card</button>
+              <button id="demo-read" type="button" class="link">Read aloud</button>
+              <button id="demo-copy" type="button" class="link">Copy for Word</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="how" class="gap">
@@ -182,6 +235,7 @@
       }
     })
   </script>
+  <script type="module" src="demo.js"></script>
   <script type="module">
     // The undertaker (undertaker.js, the same file as the web app's signed-out page): he peeks in, drops onto the word, and strolls.
     import { mountUndertaker } from './undertaker.js'
