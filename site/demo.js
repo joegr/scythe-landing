@@ -3,9 +3,9 @@
 // when that site allows it, so the demo reads Wikipedia (which does) and any page that sends CORS
 // headers; for anything else it asks for the text, as the app does for a paywalled article.
 // The rules are the app's (scythe-web/frontend/src/lib): marks snap to whole words, a card is the
-// source's exact words and at most 100 of them, and the read-aloud version is the marked words alone.
+// source's exact words and at most 400 of them, and the read-aloud version is the marked words alone.
 
-const CARD_WORDS = 100
+const CARD_WORDS = 400
 const SOURCE_WORDS = 20_000
 const STYLES = ['underline', 'highlight', 'emphasis'] // keys 1, 2 and 3
 const CLASS = { underline: 't-u', highlight: 't-hl', emphasis: 't-em' }
