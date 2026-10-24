@@ -138,3 +138,14 @@ footer { margin-top: 5rem; border-top: 3px solid var(--ink); padding-top: 1rem; 
 .undertaker .stroke { fill: none; stroke: var(--paper); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .undertaker .stroke.thin { stroke-width: 1.4; }
 .undertaker .solid { fill: var(--paper); stroke: none; }
+
+/* ---------- the round timer, alone ---------- */
+.timer-clock { font-size: 3.5rem; line-height: 1.1; font-variant-numeric: tabular-nums; margin: .25rem 0; }
+.timer-clock.running { border-left: 3px solid var(--ink); padding-left: .5rem; }
+.timer-clock.over, .timer-prep .over, .timer-table .over { color: var(--accent); font-weight: 600; }
+.timer-speech .timer-count { opacity: .7; }
+.timer-prep { gap: .5rem 2rem; }
+.timer-label { display: block; font-weight: 600; margin-top: .5rem; }
+.timer-table { border-collapse: collapse; width: 100%; }
+.timer-table th, .timer-table td { text-align: left; padding: .3rem .75rem .3rem 0; border-top: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+.timer-table th { border-top: 0; font-weight: 600; }
