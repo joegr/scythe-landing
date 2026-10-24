@@ -224,7 +224,7 @@
   </div>
 
   <script>
-    // Signup: POST the email to the relay, which saves it to a private GitHub repo.
+    // Signup: POST the email to the relay, which saves it to a private GitHub repo, attributed to this page (source "landing").
     const form = document.getElementById('signup-form')
     const status = document.getElementById('signup-status')
     const endpoint = document.querySelector('meta[name="signup-endpoint"]').content.trim()
@@ -241,7 +241,7 @@
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, website: form.website.value, source: location.search.slice(1) || null }),
+          body: JSON.stringify({ email, website: form.website.value, campaign: location.search.slice(1) || null }),
         })
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
         form.hidden = true
