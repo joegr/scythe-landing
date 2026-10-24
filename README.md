@@ -25,7 +25,7 @@ Each signup becomes `signups/<sha256(email)>.json` in `joegr/scythe-signups`:
 { "email": "you@school.edu", "source": "utm_source=reddit", "created_at": "2026-10-15T23:40:00.000Z" }
 ```
 
-Because the file is named after the hashed email, a repeat signup tries to create a file that already exists. It's treated as a success, so there are no duplicates. `source` keeps only the `utm_*` tags from the page's link; anything else on it is dropped, so the email is the only personal data stored. The relay lowercases emails, ignores submissions that fill the hidden honeypot field, allows 5 requests per IP per minute, accepts only the origins listed in `relay/fly.toml`, and answers the same way for new and repeat emails.
+Because the file is named after the hashed email, a repeat signup tries to create a file that already exists. It's treated as a success, so there are no duplicates. `source` keeps only the `utm_*` tags from the page's link; anything else on it is dropped, so the email is the only personal data stored. The relay lowercases emails, ignores submissions that fill the hidden honeypot field, allows 5 requests per IP per minute, accepts only the origins listed in `relay/fly.toml` (kept out of the repo: `*.toml` is ignored, so the relay's Fly config lives only on the machine that deploys it), and answers the same way for new and repeat emails.
 
 To export the list:
 
