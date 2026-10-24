@@ -22,20 +22,22 @@ python3 -m http.server 8137 -d site
 Each signup becomes `signups/<sha256(email)>.json` in `joegr/scythe-signups`:
 
 ```json
-{ "email": "you@school.edu", "source": "utm_source=reddit", "created_at": "2026-10-15T23:40:00.000Z" }
+{ "email": "you@school.edu", "source": "landing", "campaign": "utm_source=reddit", "created_at": "2026-10-24T23:40:00.000Z" }
 ```
 
-Because the file is named after the hashed email, a repeat signup tries to create a file that already exists. It's treated as a success, so there are no duplicates. `source` keeps only the `utm_*` tags from the page's link; anything else on it is dropped, so the email is the only personal data stored. The relay lowercases emails, ignores submissions that fill the hidden honeypot field, allows 5 requests per IP per minute, accepts only the origins listed in `relay/fly.toml`, and answers the same way for new and repeat emails.
+Because the file is named after the hashed email, a repeat signup tries to create a file that already exists. It's treated as a success, so there are no duplicates. `source` is always `landing`: every signup the relay takes came from this page's form. `campaign` keeps only the `utm_*` tags from the page's link (or is null); anything else on it is dropped, so the email is the only personal data stored. Signups from before October 24, 2026 have no `campaign`, and their `source` holds the utm tags instead. The relay lowercases emails, ignores submissions that fill the hidden honeypot field, allows 5 requests per IP per minute, accepts only the origins listed in `relay/fly.toml`, and answers the same way for new and repeat emails.
 
 To export the list:
 
 ```bash
-gh repo clone joegr/scythe-signups && jq -r '[.email, .created_at] | @csv' scythe-signups/signups/*.json > signups.csv
+gh repo clone joegr/scythe-signups && jq -r '[.email, (.source // ""), (.campaign // ""), .created_at] | @csv' scythe-signups/signups/*.json > signups.csv
 ```
 
 ## Deploy the relay
 
 Create a fine-grained personal access token (GitHub → Settings → Developer settings → Fine-grained tokens) with access to **only** `joegr/scythe-signups` and the single permission **Contents: read and write**. Then:
+
+`cd relay && npm test` checks what a signup record holds. Then:
 
 ```bash
 cd relay

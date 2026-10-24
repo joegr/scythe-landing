@@ -3,6 +3,7 @@
 // makes writes idempotent: a repeat signup hits "already exists" and is treated as success.
 import { createHash } from 'node:crypto'
 import { createServer } from 'node:http'
+import { record } from './record.js'
 
 const { GITHUB_TOKEN, SIGNUPS_REPO, ALLOWED_ORIGINS = '', PORT = 8080 } = process.env
 if (!GITHUB_TOKEN || !SIGNUPS_REPO) throw new Error('GITHUB_TOKEN and SIGNUPS_REPO must be set')
@@ -21,23 +22,12 @@ const limited = (ip) => {
 }
 setInterval(() => hits.clear(), 10 * 60_000).unref()
 
-// Where a signup came from: only the utm_* tags of the page's query string. Anything else riding
-// on the link (click IDs, an email someone pasted into it) is dropped, so the email is all we keep.
-export function campaign(query) {
-  const kept = new URLSearchParams()
-  for (const [k, v] of new URLSearchParams(String(query || ''))) {
-    if (/^utm_[a-z]{1,20}$/.test(k)) kept.append(k, v.slice(0, 60))
-  }
-  return kept.toString().slice(0, 200) || null
-}
-
-async function store(email, source) {
+async function store(email, query) {
   const id = createHash('sha256').update(email).digest('hex').slice(0, 32)
-  const record = { email, source, created_at: new Date().toISOString() }
   const res = await fetch(`https://api.github.com/repos/${SIGNUPS_REPO}/contents/signups/${id}.json`, {
     method: 'PUT',
     headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'scythe-signup' },
-    body: JSON.stringify({ message: 'signup', content: Buffer.from(JSON.stringify(record, null, 2) + '\n').toString('base64') }),
+    body: JSON.stringify({ message: 'signup', content: Buffer.from(JSON.stringify(record(email, query), null, 2) + '\n').toString('base64') }),
   })
   // 422 without a sha means the file exists: a repeat signup.
   if (!res.ok && res.status !== 422) throw new Error(`GitHub ${res.status}: ${await res.text()}`)
@@ -66,10 +56,9 @@ createServer(async (req, res) => {
 
   const email = String(body.email || '').trim().toLowerCase()
   if (email.length > 254 || !EMAIL.test(email)) return reply(400, { error: 'invalid email' })
-  const source = campaign(body.source)
-
   try {
-    await store(email, source)
+    // `campaign` is the page's query string; pages cached from before it was renamed send it as `source`.
+    await store(email, body.campaign ?? body.source)
   } catch (e) {
     console.error(e.message)
     return reply(502, { error: 'could not save, please try again' })
